@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy application code first
-COPY . /app
+# Copy deployment folder
+COPY deployment/ /app/
 
 # Download model from Google Drive at build time using gdown (handles large files)
 ARG GDRIVE_FILE_ID=REPLACE_WITH_YOUR_FILE_ID

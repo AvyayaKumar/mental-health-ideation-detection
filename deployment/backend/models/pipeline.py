@@ -25,13 +25,14 @@ class AnalysisPipeline:
         else:
             logger.warning("⚠️ ML model not available - using keyword-based fallback")
 
-    def analyze(self, text: str, explain: bool = True) -> Dict:
+    def analyze(self, text: str, explain: bool = False) -> Dict:
         """
         Analyze text for suicide ideation risk.
 
         Args:
             text: Raw text to analyze
             explain: Whether to include interpretability (text highlighting)
+                    NOTE: Integrated Gradients is CPU-intensive. Default is False for performance.
 
         Returns:
             Dict with risk assessment, PII info, and optional explanations

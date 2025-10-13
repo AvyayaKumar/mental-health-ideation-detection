@@ -36,7 +36,11 @@ def init_worker(**kwargs):
     _pipeline = AnalysisPipeline()
 
 
-@celery_app.task(name="analyze_text")
+@celery_app.task(name="analyze_text", time_limit=60, soft_time_limit=45)
 def analyze_text(text: str):
-    """Run analysis pipeline on text. Returns JSON-serializable dict."""
+    """
+    Run analysis pipeline on text. Returns JSON-serializable dict.
+
+    Timeout: 60s hard limit, 45s soft limit (for Railway compatibility)
+    """
     return _pipeline.analyze(text)

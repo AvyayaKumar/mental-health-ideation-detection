@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visitor Analytics - Mental Health Ideation Detection</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container { max-width: 1400px; margin: 0 auto; }
+      .header {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+      h1 { margin: 0 0 0.5rem 0; color: #667eea; }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        text-align: center;
+        transition: transform 0.2s;
+      }
+      .stat-card:hover { transform: translateY(-5px); }
+      .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+      .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .stat-label { color: #666; font-size: 0.9rem; margin-top: 0.5rem; }
+      .section {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+      .section h2 {
+        margin-top: 0;
+        color: #667eea;
+        font-size: 1.5rem;
+      }
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+      .chart-item {
+        padding: 1rem;
+        background: #f9f9f9;
+        border-radius: 12px;
+      }
+      .bar-chart {
+        margin-top: 1rem;
+      }
+      .bar-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .bar-label {
+        flex: 0 0 100px;
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .bar-visual {
+        flex: 1;
+        height: 30px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 6px;
+        position: relative;
+        margin-right: 0.5rem;
+      }
+      .bar-count {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+      }
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+      tr:hover { background: #f9f9f9; }
+      .ip { font-family: monospace; color: #667eea; }
+      .time {
+        color: #999;
+        font-size: 0.9rem;
+      }
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 1rem;
+        transition: all 0.2s;
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+      .loading {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+        font-size: 1.2rem;
+      }
+      .filter-buttons {
+        margin-bottom: 1rem;
+      }
+      .filter-btn {
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+        border: 2px solid #667eea;
+        background: white;
+        color: #667eea;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .filter-btn.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+      }
+      .filter-btn:hover {
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>👋 Visitor Analytics</h1>
+        <p style="color: #666; margin: 0;">See who's been visiting your site!</p>
+        <a href="/" class="btn btn-primary" style="margin-top: 1rem;">← Back to Analyzer</a>
+        <a href="/admin/feedback" class="btn btn-primary" style="margin-top: 1rem;">📊 View Feedback</a>
+      </div>
+
+      <!-- Time Range Filter -->
+      <div class="section">
+        <h2>Time Range</h2>
+        <div class="filter-buttons">
+          <button class="filter-btn active" onclick="loadStats(1)" data-days="1">Last 24 Hours</button>
+          <button class="filter-btn" onclick="loadStats(7)" data-days="7">Last 7 Days</button>
+          <button class="filter-btn" onclick="loadStats(30)" data-days="30">Last 30 Days</button>
+        </div>
+      </div>
+
+      <!-- Main Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="totalVisitors">-</div>
+          <div class="stat-label">Total Visitors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌍</div>
+          <div class="stat-value" id="uniqueIPs">-</div>
+          <div class="stat-label">Unique Visitors</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-value" id="pageViews">-</div>
+          <div class="stat-label">Page Views</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value" id="avgDaily">-</div>
+          <div class="stat-label">Avg. Daily Visits</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="section">
+        <h2>📊 Analytics Breakdown</h2>
+        <div class="chart-grid">
+          <!-- Browsers -->
+          <div class="chart-item">
+            <h3 style="margin-top: 0; color: #667eea;">🌐 Browsers</h3>
+            <div class="bar-chart" id="browsersChart">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+
+          <!-- Devices -->
+          <div class="chart-item">
+            <h3 style="margin-top: 0; color: #667eea;">📱 Devices</h3>
+            <div class="bar-chart" id="devicesChart">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+
+          <!-- Operating Systems -->
+          <div class="chart-item">
+            <h3 style="margin-top: 0; color: #667eea;">💻 Operating Systems</h3>
+            <div class="bar-chart" id="osChart">
+              <div class="loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Views -->
+      <div class="section">
+        <h2>📄 Popular Pages</h2>
+        <div class="bar-chart" id="pagesChart">
+          <div class="loading">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Recent Visitors -->
+      <div class="section">
+        <h2>🕐 Recent Visitors</h2>
+        <table id="visitorsTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>IP Address</th>
+              <th>Page</th>
+              <th>Browser</th>
+              <th>Device</th>
+              <th>OS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let currentDays = 7;
+
+      // Load stats on page load
+      loadStats(7);
+      loadRecentVisitors();
+
+      async function loadStats(days = 7) {
+        currentDays = days;
+
+        // Update button states
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.getAttribute('data-days') == days ||
+              (btn.textContent.includes('24') && days === 1) ||
+              (btn.textContent.includes('7') && days === 7) ||
+              (btn.textContent.includes('30') && days === 30)) {
+            btn.classList.add('active');
+          }
+        });
+
+        try {
+          const response = await fetch(`/api/v1/visitors/stats?days=${days}`);
+          const data = await response.json();
+
+          // Update main stats
+          document.getElementById('totalVisitors').textContent = data.total_visitors;
+          document.getElementById('uniqueIPs').textContent = data.unique_ips;
+          document.getElementById('pageViews').textContent = data.page_views.reduce((sum, p) => sum + p.count, 0);
+
+          const avgDaily = data.daily_visits.length > 0
+            ? Math.round(data.total_visitors / days)
+            : 0;
+          document.getElementById('avgDaily').textContent = avgDaily;
+
+          // Render charts
+          renderBarChart('browsersChart', data.browsers);
+          renderBarChart('devicesChart', data.devices);
+          renderBarChart('osChart', data.operating_systems);
+          renderBarChart('pagesChart', data.page_views);
+
+        } catch (e) {
+          console.error('Error loading stats:', e);
+        }
+      }
+
+      async function loadRecentVisitors() {
+        try {
+          const response = await fetch('/api/v1/visitors/recent?limit=50');
+          const data = await response.json();
+
+          const tbody = document.querySelector('#visitorsTable tbody');
+
+          if (data.visitors.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No visitors yet</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.visitors.map(v => {
+            const time = new Date(v.timestamp);
+            const timeStr = time.toLocaleString();
+
+            return `
+              <tr>
+                <td class="time">${timeStr}</td>
+                <td class="ip">${v.ip_address || 'Unknown'}</td>
+                <td>${v.path}</td>
+                <td>${v.browser || 'Unknown'}</td>
+                <td>${v.device_type || 'Unknown'}</td>
+                <td>${v.os || 'Unknown'}</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (e) {
+          console.error('Error loading recent visitors:', e);
+        }
+      }
+
+      function renderBarChart(elementId, data) {
+        const container = document.getElementById(elementId);
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div style="color: #999; text-align: center;">No data</div>';
+          return;
+        }
+
+        const maxCount = Math.max(...data.map(item => item.count || 0));
+
+        container.innerHTML = data.slice(0, 5).map(item => {
+          const label = item.name || item.path || item.type || 'Unknown';
+          const count = item.count || 0;
+          const width = maxCount > 0 ? (count / maxCount * 100) : 0;
+
+          return `
+            <div class="bar-item">
+              <div class="bar-label">${label}</div>
+              <div class="bar-visual" style="width: ${width}%">
+                <div class="bar-count">${count}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Auto-refresh every 30 seconds
+      setInterval(() => {
+        loadStats(currentDays);
+        loadRecentVisitors();
+      }, 30000);
+    </script>
+  </body>
+</html>

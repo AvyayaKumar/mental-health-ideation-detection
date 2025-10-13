@@ -125,6 +125,59 @@ class FeedbackStats(Base):
         }
 
 
+class Visitor(Base):
+    """
+    Track website visitors for basic analytics.
+
+    Keeps recent visitor data for fun analytics. Old records can be
+    automatically purged to save space.
+    """
+    __tablename__ = "visitors"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Visit details
+    ip_address = Column(String(50), nullable=True)  # Can be anonymized
+    user_agent = Column(String(500), nullable=True)  # Browser info
+    path = Column(String(200), nullable=False)  # Page visited
+    method = Column(String(10), nullable=False)  # GET, POST, etc.
+
+    # Geographic/device info (parsed from user agent)
+    browser = Column(String(50), nullable=True)
+    device_type = Column(String(50), nullable=True)  # desktop, mobile, tablet
+    os = Column(String(50), nullable=True)
+
+    # Timing
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Optional: track if this led to an analysis
+    led_to_analysis = Column(Boolean, default=False)
+
+    def to_dict(self):
+        """Convert visitor to dictionary for JSON serialization."""
+        return {
+            "id": self.id,
+            "ip_address": self.anonymize_ip(self.ip_address) if self.ip_address else None,
+            "path": self.path,
+            "method": self.method,
+            "browser": self.browser,
+            "device_type": self.device_type,
+            "os": self.os,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "led_to_analysis": self.led_to_analysis,
+        }
+
+    @staticmethod
+    def anonymize_ip(ip: str) -> str:
+        """Anonymize IP address for privacy (keeps first 3 octets)."""
+        if not ip:
+            return None
+        parts = ip.split('.')
+        if len(parts) == 4:
+            return f"{parts[0]}.{parts[1]}.{parts[2]}.xxx"
+        return "xxx.xxx.xxx.xxx"
+
+
 def init_db():
     """Initialize database tables."""
     Base.metadata.create_all(bind=engine)

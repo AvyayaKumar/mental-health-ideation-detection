@@ -19,6 +19,9 @@ python-dotenv==1.0.1
 sqlalchemy==2.0.23
 alembic==1.12.1  # For database migrations
 
+# User Agent Parsing (for visitor analytics)
+user-agents==2.2.0
+
 # ML/AI Dependencies (CPU-only for smaller image size)
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.0.0

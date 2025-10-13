@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from worker import analyze_text, celery_app
-from models.database import init_db, get_db, Feedback, FeedbackStats
+from models.database import init_db, get_db, Feedback, FeedbackStats, Visitor, SessionLocal
 
 ENV = os.getenv("ENV", "development")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -32,11 +32,64 @@ app.add_middleware(
 templates = Jinja2Templates(directory="templates")
 
 
+# Visitor tracking middleware
+@app.middleware("http")
+async def track_visitors(request: Request, call_next):
+    """Track page visits for analytics."""
+    # Track page visits (but not API health checks or static assets)
+    path = request.url.path
+    if not path.startswith("/api/") and not path.startswith("/static") and path != "/health":
+        try:
+            # Parse user agent
+            from user_agents import parse
+            ua_string = request.headers.get("user-agent", "")
+            ua = parse(ua_string)
+
+            # Get client IP (handle proxies)
+            client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else None)
+            if client_ip and "," in client_ip:
+                client_ip = client_ip.split(",")[0].strip()
+
+            # Create visitor record in background (don't block request)
+            db = SessionLocal()
+            try:
+                visitor = Visitor(
+                    ip_address=client_ip,
+                    user_agent=ua_string[:500],  # Truncate to fit DB
+                    path=path,
+                    method=request.method,
+                    browser=ua.browser.family if ua.browser else None,
+                    device_type=ua.device.family if ua.device else None,
+                    os=ua.os.family if ua.os else None,
+                )
+                db.add(visitor)
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            # Don't let tracking errors break the app
+            print(f"Visitor tracking error: {e}")
+
+    response = await call_next(request)
+    return response
+
+
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
     """Initialize database tables on application startup."""
     init_db()
+
+    # Clean up old visitor records (keep only last 30 days)
+    try:
+        from datetime import timedelta
+        db = SessionLocal()
+        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        db.query(Visitor).filter(Visitor.timestamp < cutoff_date).delete()
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"Cleanup error: {e}")
 
 
 class EssayRequest(BaseModel):
@@ -341,3 +394,89 @@ def export_feedback(
 def admin_feedback_page(request: Request):
     """Admin dashboard for reviewing feedback."""
     return templates.TemplateResponse("admin_feedback.html", {"request": request})
+
+
+# ============================================================================
+# VISITOR ANALYTICS ENDPOINTS
+# ============================================================================
+
+@app.get("/api/v1/visitors/stats")
+def get_visitor_stats(days: int = 7, db: Session = Depends(get_db)):
+    """
+    Get visitor statistics for the last N days.
+
+    Query parameters:
+    - days: Number of days to look back (default 7)
+    """
+    from datetime import timedelta
+
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+    # Total visitors
+    total_visitors = db.query(func.count(Visitor.id)).filter(Visitor.timestamp >= cutoff).scalar()
+
+    # Unique IPs
+    unique_ips = db.query(func.count(func.distinct(Visitor.ip_address))).filter(Visitor.timestamp >= cutoff).scalar()
+
+    # Page views by path
+    page_views = db.query(
+        Visitor.path,
+        func.count(Visitor.id).label('count')
+    ).filter(Visitor.timestamp >= cutoff).group_by(Visitor.path).order_by(func.count(Visitor.id).desc()).limit(10).all()
+
+    # Browser breakdown
+    browsers = db.query(
+        Visitor.browser,
+        func.count(Visitor.id).label('count')
+    ).filter(Visitor.timestamp >= cutoff).group_by(Visitor.browser).order_by(func.count(Visitor.id).desc()).all()
+
+    # Device type breakdown
+    devices = db.query(
+        Visitor.device_type,
+        func.count(Visitor.id).label('count')
+    ).filter(Visitor.timestamp >= cutoff).group_by(Visitor.device_type).order_by(func.count(Visitor.id).desc()).all()
+
+    # OS breakdown
+    operating_systems = db.query(
+        Visitor.os,
+        func.count(Visitor.id).label('count')
+    ).filter(Visitor.timestamp >= cutoff).group_by(Visitor.os).order_by(func.count(Visitor.id).desc()).all()
+
+    # Visits per day
+    daily_visits = db.query(
+        func.date(Visitor.timestamp).label('date'),
+        func.count(Visitor.id).label('count')
+    ).filter(Visitor.timestamp >= cutoff).group_by(func.date(Visitor.timestamp)).order_by(func.date(Visitor.timestamp)).all()
+
+    return {
+        "total_visitors": total_visitors,
+        "unique_ips": unique_ips,
+        "time_range_days": days,
+        "page_views": [{"path": p, "count": c} for p, c in page_views],
+        "browsers": [{"name": b or "Unknown", "count": c} for b, c in browsers],
+        "devices": [{"type": d or "Unknown", "count": c} for d, c in devices],
+        "operating_systems": [{"name": os or "Unknown", "count": c} for os, c in operating_systems],
+        "daily_visits": [{"date": str(d), "count": c} for d, c in daily_visits]
+    }
+
+
+@app.get("/api/v1/visitors/recent")
+def get_recent_visitors(limit: int = 50, db: Session = Depends(get_db)):
+    """
+    Get recent visitors.
+
+    Query parameters:
+    - limit: Max number of recent visitors to return (default 50)
+    """
+    visitors = db.query(Visitor).order_by(Visitor.timestamp.desc()).limit(limit).all()
+
+    return {
+        "count": len(visitors),
+        "visitors": [v.to_dict() for v in visitors]
+    }
+
+
+@app.get("/admin/visitors")
+def admin_visitors_page(request: Request):
+    """Admin dashboard for viewing visitor analytics."""
+    return templates.TemplateResponse("admin_visitors.html", {"request": request})

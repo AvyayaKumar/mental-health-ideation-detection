@@ -1,0 +1,89 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Data - Large CSV files not in git
+research/data/raw/*.csv
+research/data/processed/*.csv
+research/data/cache/
+*.csv
+
+# Model Files - Too large for git
+research/results/*/checkpoint-*/
+research/results/*/final_model/*.safetensors
+research/results/*/final_model/training_args.bin
+deployment/backend/models/*/final_model/*.safetensors
+deployment/backend/models/*/final_model/training_args.bin
+
+# Keep small config files
+!research/results/*/final_model/config.json
+!research/results/*/final_model/tokenizer*.json
+!research/results/*/final_model/*.txt
+!research/results/*/final_model/special_tokens_map.json
+
+# Logs
+*.log
+logs/
+*.out
+
+# Experiment Tracking
+wandb/
+mlruns/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Database
+*.db
+*.sqlite3
+
+# Deployment artifacts
+deployment/distilbert-model.zip
+
+# Documentation builds
+docs/_build/
+site/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archives in root (keep in ID Archive)
+*.zip
+*.tar.gz
+!deployment/distilbert-model.zip

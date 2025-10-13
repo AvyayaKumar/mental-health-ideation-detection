@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mental Health Ideation Detection - AI-Powered Risk Assessment</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
+      textarea { width: 100%; height: 200px; }
+      .result { margin-top: 1rem; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
+      .muted { color: #555; }
+      .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; color: white; font-weight: 600; }
+      .LOW { background: #4caf50; }
+      .MEDIUM { background: #ff9800; }
+      .HIGH { background: #f44336; }
+      .highlighted-text { font-size: 1.1rem; line-height: 1.8; padding: 1rem; background: #f9f9f9; border-radius: 8px; margin: 1rem 0; }
+      .word { display: inline; padding: 2px 0; border-radius: 3px; }
+      .word.important { background: #ffeb3b; font-weight: 600; padding: 2px 4px; }
+      .word.very-important { background: #ff9800; color: white; font-weight: 700; padding: 2px 4px; }
+      .word.critical { background: #f44336; color: white; font-weight: 700; padding: 2px 4px; }
+      .analysis-method { font-size: 0.9rem; color: #666; font-style: italic; }
+    </style>
+  </head>
+  <body>
+    <div style="text-align: center; padding: 1rem 0;">
+      <h1>Mental Health Ideation Detection</h1>
+      <p style="font-size: 1.1rem; color: #666;">AI-Powered Risk Assessment for Educational Settings</p>
+    </div>
+    <p class="muted">This tool uses advanced transformer models to identify potentially concerning content. It is designed to assist educators and counselors, not replace professional judgment. Always follow your institution's protocols.</p>
+
+    <label for="essay">Paste essay text</label>
+    <textarea id="essay" placeholder="Paste essay text here..."></textarea>
+    <br />
+    <button id="submit">Analyze</button>
+
+    <div id="status" class="result" style="display:none"></div>
+
+    <script>
+      const submitBtn = document.getElementById('submit');
+      const essayEl = document.getElementById('essay');
+      const statusEl = document.getElementById('status');
+
+      async function analyze() {
+        const text = essayEl.value.trim();
+        if (!text) { alert('Please paste essay text.'); return; }
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = '<span class="muted">Submitting...</span>';
+        try {
+          const resp = await fetch('/api/v1/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || 'Request failed');
+          pollResult(data.task_id);
+        } catch (e) {
+          statusEl.innerHTML = `<span style="color:#f44336">Error: ${e.message}</span>`;
+        }
+      }
+
+      async function pollResult(taskId) {
+        statusEl.innerHTML = `<span class="muted">Analyzing... (task: ${taskId})</span>`;
+        const start = Date.now();
+        const timeoutMs = 30000;
+        const interval = setInterval(async () => {
+          if (Date.now() - start > timeoutMs) {
+            clearInterval(interval);
+            statusEl.innerHTML = '<span style="color:#f44336">Timed out waiting for result.</span>';
+            return;
+          }
+          const r = await fetch(`/api/v1/result/${taskId}`);
+          const data = await r.json();
+          if (data.status === 'SUCCESS' || data.result) {
+            clearInterval(interval);
+            const res = data.result || {};
+            const risk = (res.risk && res.risk.risk_level) || 'UNKNOWN';
+            const score = (res.risk && res.risk.score) || 0;
+            const confidence = (res.risk && res.risk.confidence) || 0;
+            const triggers = (res.risk && res.risk.triggers) || [];
+            const guidance = (res.risk && res.risk.guidance) || '';
+            const method = res.method || 'unknown';
+            const problematicSentences = (res.risk && res.risk.problematic_sentences) || [];
+
+            // Generate problematic sentences visualization
+            let analysisHTML = '';
+            if (problematicSentences.length > 0) {
+              analysisHTML = '<div style="margin-top:1rem"><strong>Problematic Sentences Detected:</strong></div>';
+              problematicSentences.forEach((sentInfo, idx) => {
+                const sentence = (sentInfo.sentence || '').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+                const score = sentInfo.score || 0;
+                let bgColor = '#ffeb3b'; // yellow
+                if (score >= 0.9) bgColor = '#f44336'; // red
+                else if (score >= 0.7) bgColor = '#ff9800'; // orange
+
+                analysisHTML += `<div style="margin:0.5rem 0; padding:0.75rem; background:${bgColor}; color:${score >= 0.7 ? 'white' : 'black'}; border-radius:6px; font-weight:600;">
+                  ${idx + 1}. "${sentence}"
+                </div>`;
+              });
+              analysisHTML += '<div class="analysis-method">Model identified these sentences as containing high-risk language</div>';
+            } else if (risk === 'HIGH' || risk === 'MEDIUM') {
+              analysisHTML = '<div style="margin-top:1rem"><strong>Analysis:</strong> Model detected concerning language patterns across the entire text.</div>';
+            } else {
+              analysisHTML = '<div style="margin-top:1rem"><strong>Analysis:</strong> No specific problematic sentences identified.</div>';
+            }
+
+            statusEl.innerHTML = `
+              <div>
+                <div><span class="badge ${risk}">${risk}</span> confidence ${Math.round(confidence*100)}%</div>
+                ${analysisHTML}
+                <div style="margin-top:1rem"><strong>Key triggers:</strong> ${triggers.length ? triggers.join(', ') : 'None detected'}</div>
+                <div style="margin-top:0.5rem"><strong>Guidance:</strong> ${guidance}</div>
+                <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? 'ML Transformer Model (DistilBERT)' : 'Keyword-based Fallback'}</div>
+              </div>`;
+          } else if (data.status === 'FAILURE') {
+            clearInterval(interval);
+            statusEl.innerHTML = '<span style="color:#f44336">Analysis failed. Please try again.</span>';
+          }
+        }, 1200);
+      }
+
+      submitBtn.addEventListener('click', analyze);
+    </script>
+
+    <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid #ddd; color: #666; font-size: 0.9rem;">
+      <p><strong>⚠️ Important Disclaimer:</strong></p>
+      <p>This tool is designed to assist educators and counselors in identifying potentially concerning content. It is NOT a substitute for professional mental health evaluation or crisis intervention.</p>
+      <p>If you or someone you know is in crisis, please contact:</p>
+      <ul>
+        <li><strong>National Suicide Prevention Lifeline:</strong> 988 (call or text)</li>
+        <li><strong>Crisis Text Line:</strong> Text HOME to 741741</li>
+        <li><strong>International:</strong> <a href="https://www.iasp.info/resources/Crisis_Centres/" target="_blank">Find your local helpline</a></li>
+      </ul>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
+        mentalhealthideation.com • Research Project • DistilBERT Model (97.96% Accuracy)
+      </p>
+    </div>
+  </body>
+</html>

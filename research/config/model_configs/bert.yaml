@@ -1,0 +1,11 @@
+# BERT-base Model Configuration
+
+model:
+  name: "bert-base-uncased"
+  type: "bert"
+  tokenizer: "bert-base-uncased"
+  num_labels: 2
+
+  # Model info
+  parameters: "110M"
+  description: "Standard BERT baseline"

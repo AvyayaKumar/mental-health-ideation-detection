@@ -1,0 +1,27 @@
+# Web Framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+
+# Task Queue
+celery==5.3.6
+redis==5.0.1
+
+# Data Validation
+pydantic==2.9.2
+
+# Templates
+jinja2==3.1.4
+
+# Environment
+python-dotenv==1.0.1
+
+# ML/AI Dependencies (CPU-only for smaller image size)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+transformers>=4.30.0
+captum>=0.6.0  # For Integrated Gradients (text highlighting)
+numpy>=1.24.0
+
+# Optional: If you want SHAP/LIME later
+# shap>=0.42.0
+# lime>=0.2.0.1

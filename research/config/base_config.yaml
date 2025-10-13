@@ -1,0 +1,77 @@
+# Base Configuration for Suicide Ideation Detection Project
+# This config is used by all models unless overridden
+
+project:
+  name: "suicide-ideation-detection"
+  description: "Comparative analysis of transformer models for suicide ideation detection"
+
+data:
+  # Paths (configured for Colab - all files in root directory)
+  raw_csv: "Suicide_Detection_Full.csv"
+  split_indices: "split_indices.json"
+  cache_dir: "data_cache"
+
+  # Data processing
+  text_column: "text"
+  label_column: "class"
+  class_mapping:
+    "non-suicide": 0
+    "suicide": 1
+
+preprocessing:
+  max_seq_length: 256  # From EDA: 80.7% coverage, good balance of speed and coverage
+  padding: true
+  truncation: true
+
+training:
+  # Output (saves to Google Drive so results persist even if Colab disconnects)
+  output_dir: "/content/drive/MyDrive/suicide-detection/results"
+  save_total_limit: 2  # Keep only best 2 checkpoints
+
+  # Training hyperparameters
+  num_train_epochs: 3
+  per_device_train_batch_size: 16  # Adjust based on GPU memory
+  per_device_eval_batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  gradient_accumulation_steps: 1
+
+  # Performance optimization
+  fp16: true  # Mixed precision training (2x speedup on GPU)
+  dataloader_num_workers: 2
+  dataloader_pin_memory: true
+
+  # Evaluation
+  eval_strategy: "steps"
+  eval_steps: 500
+  save_strategy: "steps"
+  save_steps: 500
+  logging_steps: 100
+
+  # Model selection
+  load_best_model_at_end: true
+  metric_for_best_model: "f1"
+  greater_is_better: true
+
+  # Reproducibility
+  seed: 42
+
+# Weights & Biases (Experiment Tracking)
+wandb:
+  project: "suicide-ideation-detection"
+  entity: null  # Set to your wandb username
+  log_model: false  # Set true to save models to wandb
+
+# Class imbalance handling
+class_weights:
+  enabled: false  # Set to true if EDA shows imbalance
+
+# Evaluation
+metrics:
+  - "accuracy"
+  - "precision"
+  - "recall"
+  - "f1"
+  - "false_negative_rate"
+  - "false_positive_rate"

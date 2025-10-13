@@ -1,0 +1,11 @@
+# RoBERTa-base Model Configuration
+
+model:
+  name: "roberta-base"
+  type: "roberta"
+  tokenizer: "roberta-base"
+  num_labels: 2
+
+  # Model info
+  parameters: "125M"
+  description: "Optimized BERT pretraining, often best performer"

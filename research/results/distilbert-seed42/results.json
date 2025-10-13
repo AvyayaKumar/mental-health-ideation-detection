@@ -1,0 +1,45 @@
+{
+  "model_type": "distilbert",
+  "model_name": "distilbert-base-uncased",
+  "seed": 42,
+  "val_results": {
+    "eval_loss": 0.083852618932724,
+    "eval_accuracy": 0.9791442237256001,
+    "eval_precision": 0.9810504456173748,
+    "eval_recall": 0.977161079031285,
+    "eval_f1": 0.9791018998272885,
+    "eval_fnr": 0.02283892096871499,
+    "eval_fpr": 0.018872802481902793,
+    "eval_true_positives": 11338,
+    "eval_true_negatives": 11385,
+    "eval_false_positives": 219,
+    "eval_false_negatives": 265,
+    "eval_runtime": 39.7922,
+    "eval_samples_per_second": 583.204,
+    "eval_steps_per_second": 18.245,
+    "epoch": 3.0
+  },
+  "test_results": {
+    "eval_loss": 0.08182395249605179,
+    "eval_accuracy": 0.9795760082730093,
+    "eval_precision": 0.9824029126213593,
+    "eval_recall": 0.9766459841433989,
+    "eval_f1": 0.9795159896283492,
+    "eval_fnr": 0.02335401585660117,
+    "eval_fpr": 0.017493967597380214,
+    "eval_true_positives": 11333,
+    "eval_true_negatives": 11401,
+    "eval_false_positives": 203,
+    "eval_false_negatives": 271,
+    "eval_runtime": 38.8322,
+    "eval_samples_per_second": 597.648,
+    "eval_steps_per_second": 18.696,
+    "epoch": 3.0
+  },
+  "training_config": {
+    "learning_rate": 2e-05,
+    "batch_size": 16,
+    "epochs": 3,
+    "max_seq_length": 256
+  }
+}

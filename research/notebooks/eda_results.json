@@ -1,0 +1,15 @@
+{
+  "total_samples": 232074,
+  "clean_samples": 232074,
+  "class_distribution": {
+    "suicide": 116037,
+    "non-suicide": 116037
+  },
+  "imbalance_ratio": 1.0,
+  "mean_word_count": 131.92523505433613,
+  "median_word_count": 60.0,
+  "pct_under_128_tokens": 63.67581030188647,
+  "pct_under_256_tokens": 80.73157699699235,
+  "recommended_max_seq_length": 512,
+  "use_class_weights": false
+}

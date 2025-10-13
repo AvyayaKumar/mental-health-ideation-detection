@@ -1,0 +1,11 @@
+# ELECTRA-base Model Configuration
+
+model:
+  name: "google/electra-base-discriminator"
+  type: "electra"
+  tokenizer: "google/electra-base-discriminator"
+  num_labels: 2
+
+  # Model info
+  parameters: "110M"
+  description: "Sample-efficient training, faster than BERT"

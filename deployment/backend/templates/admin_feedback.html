@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Feedback Dashboard</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #f5f5f5;
+      }
+      .container { max-width: 1400px; margin: 0 auto; }
+      .header {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .stat-value { font-size: 2.5rem; font-weight: 700; color: #2196f3; }
+      .stat-label { color: #666; font-size: 0.9rem; margin-top: 0.5rem; }
+      .controls {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .filter-group { display: inline-block; margin-right: 1rem; }
+      .filter-group label { font-weight: 600; margin-right: 0.5rem; }
+      .filter-group select {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-primary { background: #2196f3; color: white; }
+      .btn-success { background: #4caf50; color: white; }
+      .btn-export { background: #ff9800; color: white; margin-left: 1rem; }
+      .feedback-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        background: #2196f3;
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+      }
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+      }
+      tr:hover { background: #f9f9f9; }
+      .badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .badge.LOW { background: #4caf50; }
+      .badge.MEDIUM { background: #ff9800; }
+      .badge.HIGH { background: #f44336; }
+      .badge.correct { background: #4caf50; }
+      .badge.incorrect { background: #f44336; }
+      .text-preview {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+      }
+      .text-preview:hover { text-decoration: underline; }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+      }
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 80%;
+        max-width: 800px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .close:hover { color: #000; }
+      .loading { text-align: center; padding: 2rem; color: #666; }
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+        font-size: 1.1rem;
+      }
+      .accuracy-bar {
+        height: 20px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+      }
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        transition: width 0.5s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 style="margin: 0 0 0.5rem 0;">Feedback Dashboard</h1>
+        <p style="color: #666; margin: 0;">Monitor model performance and review teacher feedback</p>
+        <a href="/" class="btn btn-primary" style="margin-top: 1rem;">← Back to Analyzer</a>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-value" id="totalFeedback">-</div>
+          <div class="stat-label">Total Feedback</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="accuracyRate">-</div>
+          <div class="stat-label">Overall Accuracy</div>
+          <div class="accuracy-bar">
+            <div class="accuracy-fill" id="accuracyBar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="correctCount" style="color: #4caf50;">-</div>
+          <div class="stat-label">Correct Predictions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="incorrectCount" style="color: #f44336;">-</div>
+          <div class="stat-label">Incorrect Predictions</div>
+        </div>
+      </div>
+
+      <!-- Class-specific Stats -->
+      <div class="stats-grid" id="classStats">
+        <!-- Will be populated dynamically -->
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="filter-group">
+          <label for="filterStatus">Status:</label>
+          <select id="filterStatus" onchange="loadFeedback()">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="incorporated">Incorporated</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterCorrect">Correctness:</label>
+          <select id="filterCorrect" onchange="loadFeedback()">
+            <option value="">All</option>
+            <option value="true">Correct</option>
+            <option value="false">Incorrect</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="loadFeedback()">Refresh</button>
+        <a href="/api/v1/feedback/export?format=csv" class="btn btn-export" download>Export CSV</a>
+        <a href="/api/v1/feedback/export?format=jsonl" class="btn btn-export" download>Export JSONL</a>
+      </div>
+
+      <!-- Feedback Table -->
+      <div class="feedback-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Date</th>
+              <th>Text Preview</th>
+              <th>Original</th>
+              <th>Correction</th>
+              <th>Status</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="feedbackTableBody">
+            <tr><td colspan="7" class="loading">Loading feedback...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal for viewing full text -->
+    <div id="textModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Feedback Details</h2>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script>
+      // Load stats on page load
+      loadStats();
+      loadFeedback();
+
+      async function loadStats() {
+        try {
+          const response = await fetch('/api/v1/feedback/stats');
+          const data = await response.json();
+
+          document.getElementById('totalFeedback').textContent = data.total_feedback;
+          document.getElementById('accuracyRate').textContent = data.accuracy_rate + '%';
+          document.getElementById('correctCount').textContent = data.correct_predictions;
+          document.getElementById('incorrectCount').textContent = data.incorrect_predictions;
+          document.getElementById('accuracyBar').style.width = data.accuracy_rate + '%';
+
+          // Class-specific stats
+          const classStatsHtml = Object.entries(data.class_breakdown).map(([className, stats]) => `
+            <div class="stat-card">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="badge ${className}">${className}</span>
+                <span style="font-size: 1.5rem; font-weight: 700;">${stats.accuracy}%</span>
+              </div>
+              <div class="stat-label">${stats.correct} correct, ${stats.incorrect} incorrect</div>
+              <div class="accuracy-bar">
+                <div class="accuracy-fill" style="width: ${stats.accuracy}%"></div>
+              </div>
+            </div>
+          `).join('');
+
+          document.getElementById('classStats').innerHTML = classStatsHtml;
+        } catch (e) {
+          console.error('Error loading stats:', e);
+        }
+      }
+
+      async function loadFeedback() {
+        const status = document.getElementById('filterStatus').value;
+        const isCorrect = document.getElementById('filterCorrect').value;
+
+        let url = '/api/v1/feedback?limit=100';
+        if (status) url += `&status=${status}`;
+        if (isCorrect) url += `&is_correct=${isCorrect}`;
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+
+          const tbody = document.getElementById('feedbackTableBody');
+
+          if (data.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No feedback submissions yet</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.data.map(f => {
+            const date = new Date(f.created_at).toLocaleDateString();
+            const textPreview = (f.text || '').substring(0, 100);
+            const isCorrect = f.is_correct;
+
+            return `
+              <tr>
+                <td>${f.id}</td>
+                <td>${date}</td>
+                <td class="text-preview" onclick="showDetails(${f.id}, ${JSON.stringify(f).replace(/"/g, '&quot;')})">${textPreview}...</td>
+                <td><span class="badge ${f.original_prediction}">${f.original_prediction}</span></td>
+                <td><span class="badge ${f.teacher_correction}">${f.teacher_correction}</span></td>
+                <td><span class="badge ${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Correct' : 'Incorrect'}</span></td>
+                <td>${Math.round(f.original_score * 100)}%</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (e) {
+          console.error('Error loading feedback:', e);
+          document.getElementById('feedbackTableBody').innerHTML =
+            '<tr><td colspan="7" style="color: #f44336; text-align: center;">Error loading feedback</td></tr>';
+        }
+      }
+
+      function showDetails(id, feedback) {
+        const modal = document.getElementById('textModal');
+        const content = document.getElementById('modalContent');
+
+        content.innerHTML = `
+          <div style="margin-bottom: 1rem;">
+            <strong>ID:</strong> ${feedback.id} |
+            <strong>Date:</strong> ${new Date(feedback.created_at).toLocaleString()}
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>Original Prediction:</strong> <span class="badge ${feedback.original_prediction}">${feedback.original_prediction}</span>
+            (Score: ${Math.round(feedback.original_score * 100)}%, Confidence: ${Math.round(feedback.original_confidence * 100)}%)
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>Teacher Correction:</strong> <span class="badge ${feedback.teacher_correction}">${feedback.teacher_correction}</span>
+          </div>
+          ${feedback.teacher_notes ? `
+            <div style="margin-bottom: 1rem;">
+              <strong>Teacher Notes:</strong><br/>
+              <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; margin-top: 0.5rem;">
+                ${feedback.teacher_notes}
+              </div>
+            </div>
+          ` : ''}
+          <div style="margin-bottom: 1rem;">
+            <strong>Full Text:</strong><br/>
+            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; margin-top: 0.5rem; max-height: 300px; overflow-y: auto; line-height: 1.6;">
+              ${feedback.text}
+            </div>
+          </div>
+        `;
+
+        modal.style.display = 'block';
+      }
+
+      function closeModal() {
+        document.getElementById('textModal').style.display = 'none';
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        const modal = document.getElementById('textModal');
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      }
+
+      // Refresh stats every 30 seconds
+      setInterval(() => {
+        loadStats();
+        loadFeedback();
+      }, 30000);
+    </script>
+  </body>
+</html>

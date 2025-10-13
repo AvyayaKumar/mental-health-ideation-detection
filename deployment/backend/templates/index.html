@@ -19,6 +19,18 @@
       .word.very-important { background: #ff9800; color: white; font-weight: 700; padding: 2px 4px; }
       .word.critical { background: #f44336; color: white; font-weight: 700; padding: 2px 4px; }
       .analysis-method { font-size: 0.9rem; color: #666; font-style: italic; }
+      .feedback-section { margin-top: 2rem; padding: 1.5rem; background: #f5f5f5; border-radius: 8px; border: 2px dashed #ddd; }
+      .feedback-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+      .feedback-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; }
+      .feedback-btn.correct { background: #4caf50; color: white; }
+      .feedback-btn.incorrect { background: #f44336; color: white; }
+      .feedback-form { margin-top: 1rem; display: none; }
+      .feedback-form.active { display: block; }
+      .feedback-select { width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+      .feedback-textarea { width: 100%; min-height: 80px; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
+      .feedback-submit { background: #2196f3; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+      .feedback-success { color: #4caf50; font-weight: 600; margin-top: 1rem; }
+      .feedback-error { color: #f44336; font-weight: 600; margin-top: 1rem; }
     </style>
   </head>
   <body>
@@ -39,6 +51,9 @@
       const submitBtn = document.getElementById('submit');
       const essayEl = document.getElementById('essay');
       const statusEl = document.getElementById('status');
+
+      // Store current analysis result for feedback
+      let currentAnalysis = null;
 
       async function analyze() {
         const text = essayEl.value.trim();
@@ -104,6 +119,15 @@
               analysisHTML = '<div style="margin-top:1rem"><strong>Analysis:</strong> No specific problematic sentences identified.</div>';
             }
 
+            // Store for feedback
+            currentAnalysis = {
+              text: essayEl.value.trim(),
+              prediction: risk,
+              score: score,
+              confidence: confidence,
+              metadata: res
+            };
+
             statusEl.innerHTML = `
               <div>
                 <div><span class="badge ${risk}">${risk}</span> confidence ${Math.round(confidence*100)}%</div>
@@ -111,6 +135,29 @@
                 <div style="margin-top:1rem"><strong>Key triggers:</strong> ${triggers.length ? triggers.join(', ') : 'None detected'}</div>
                 <div style="margin-top:0.5rem"><strong>Guidance:</strong> ${guidance}</div>
                 <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? 'ML Transformer Model (DistilBERT)' : 'Keyword-based Fallback'}</div>
+              </div>
+
+              <!-- Feedback Section -->
+              <div class="feedback-section">
+                <h3 style="margin-top: 0;">Help Improve the Model</h3>
+                <p style="color: #666;">Was this prediction accurate? Your feedback helps improve future predictions.</p>
+                <div class="feedback-buttons">
+                  <button class="feedback-btn correct" onclick="handleFeedback(true)">✓ Prediction Correct</button>
+                  <button class="feedback-btn incorrect" onclick="handleFeedback(false)">✗ Prediction Incorrect</button>
+                </div>
+                <div id="feedbackForm" class="feedback-form">
+                  <label for="correctionSelect"><strong>What should the correct risk level be?</strong></label>
+                  <select id="correctionSelect" class="feedback-select">
+                    <option value="">-- Select correct risk level --</option>
+                    <option value="LOW">LOW - No concerning indicators</option>
+                    <option value="MEDIUM">MEDIUM - Some concerning language</option>
+                    <option value="HIGH">HIGH - Serious risk indicators</option>
+                  </select>
+                  <label for="notesTextarea"><strong>Additional notes (optional):</strong></label>
+                  <textarea id="notesTextarea" class="feedback-textarea" placeholder="Explain why the prediction was incorrect..."></textarea>
+                  <button class="feedback-submit" onclick="submitFeedback()">Submit Feedback</button>
+                  <div id="feedbackMessage"></div>
+                </div>
               </div>`;
           } else if (data.status === 'FAILURE') {
             clearInterval(interval);
@@ -120,6 +167,99 @@
       }
 
       submitBtn.addEventListener('click', analyze);
+
+      // Feedback functions
+      function handleFeedback(isCorrect) {
+        const form = document.getElementById('feedbackForm');
+        if (isCorrect) {
+          // If correct, submit immediately
+          submitFeedbackDirect(currentAnalysis.prediction);
+        } else {
+          // If incorrect, show form to get correct answer
+          form.classList.add('active');
+        }
+      }
+
+      async function submitFeedbackDirect(correction) {
+        const messageEl = document.getElementById('feedbackMessage') || document.createElement('div');
+        try {
+          const response = await fetch('/api/v1/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: currentAnalysis.text,
+              original_prediction: currentAnalysis.prediction,
+              original_score: currentAnalysis.score,
+              original_confidence: currentAnalysis.confidence,
+              teacher_correction: correction,
+              prediction_metadata: currentAnalysis.metadata
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Hide feedback buttons and show success message
+            document.querySelector('.feedback-buttons').style.display = 'none';
+            document.getElementById('feedbackForm').style.display = 'none';
+            messageEl.className = 'feedback-success';
+            messageEl.innerHTML = `<p>✓ ${data.message}</p>`;
+            document.querySelector('.feedback-section').appendChild(messageEl);
+          } else {
+            messageEl.className = 'feedback-error';
+            messageEl.textContent = 'Error submitting feedback. Please try again.';
+            document.querySelector('.feedback-section').appendChild(messageEl);
+          }
+        } catch (e) {
+          messageEl.className = 'feedback-error';
+          messageEl.textContent = 'Network error. Please try again.';
+          document.querySelector('.feedback-section').appendChild(messageEl);
+        }
+      }
+
+      async function submitFeedback() {
+        const correction = document.getElementById('correctionSelect').value;
+        const notes = document.getElementById('notesTextarea').value;
+        const messageEl = document.getElementById('feedbackMessage');
+
+        if (!correction) {
+          messageEl.className = 'feedback-error';
+          messageEl.textContent = 'Please select the correct risk level.';
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/v1/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: currentAnalysis.text,
+              original_prediction: currentAnalysis.prediction,
+              original_score: currentAnalysis.score,
+              original_confidence: currentAnalysis.confidence,
+              teacher_correction: correction,
+              teacher_notes: notes || null,
+              prediction_metadata: currentAnalysis.metadata
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            messageEl.className = 'feedback-success';
+            messageEl.innerHTML = `<p>✓ ${data.message}</p>`;
+            // Hide form and buttons
+            document.querySelector('.feedback-buttons').style.display = 'none';
+            document.getElementById('feedbackForm').style.display = 'none';
+          } else {
+            messageEl.className = 'feedback-error';
+            messageEl.textContent = 'Error submitting feedback. Please try again.';
+          }
+        } catch (e) {
+          messageEl.className = 'feedback-error';
+          messageEl.textContent = 'Network error. Please try again.';
+        }
+      }
     </script>
 
     <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid #ddd; color: #666; font-size: 0.9rem;">

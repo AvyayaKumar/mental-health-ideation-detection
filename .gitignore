@@ -87,3 +87,6 @@ Thumbs.db
 *.zip
 *.tar.gz
 !deployment/distilbert-model.zip
+
+# Internal documentation and notes
+.archive/

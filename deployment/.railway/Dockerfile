@@ -25,28 +25,28 @@ RUN if [ "$GDRIVE_FILE_ID" != "REPLACE_WITH_YOUR_FILE_ID" ]; then \
         echo "Extracting model..."; \
         unzip -qo /tmp/model.zip -d /app && \
         rm /tmp/model.zip && \
-        MODEL_SIZE=$(du -h /app/backend/models/distilbert-seed42/final_model/model.safetensors | cut -f1) && \
+        MODEL_SIZE=$(du -h /app/backend/models/roberta-seed42/final_model/model.safetensors | cut -f1) && \
         echo "✓ Model extracted: $MODEL_SIZE"; \
     else \
         echo "⚠️  WARNING: Using embedded model (may be LFS pointer)"; \
-        if [ -f "/app/backend/models/distilbert-seed42/final_model/model.safetensors" ]; then \
-            MODEL_SIZE=$(du -h /app/backend/models/distilbert-seed42/final_model/model.safetensors | cut -f1) && \
+        if [ -f "/app/backend/models/roberta-seed42/final_model/model.safetensors" ]; then \
+            MODEL_SIZE=$(du -h /app/backend/models/roberta-seed42/final_model/model.safetensors | cut -f1) && \
             echo "Model file size: $MODEL_SIZE"; \
         fi; \
     fi
 
 # Verify model file exists and is valid size
-RUN if [ ! -f "/app/backend/models/distilbert-seed42/final_model/model.safetensors" ]; then \
+RUN if [ ! -f "/app/backend/models/roberta-seed42/final_model/model.safetensors" ]; then \
         echo "ERROR: Model file not found!"; \
         exit 1; \
     fi && \
-    FILE_SIZE=$(stat -f%z /app/backend/models/distilbert-seed42/final_model/model.safetensors 2>/dev/null || stat -c%s /app/backend/models/distilbert-seed42/final_model/model.safetensors) && \
+    FILE_SIZE=$(stat -f%z /app/backend/models/roberta-seed42/final_model/model.safetensors 2>/dev/null || stat -c%s /app/backend/models/roberta-seed42/final_model/model.safetensors) && \
     if [ "$FILE_SIZE" -lt 1000000 ]; then \
         echo "ERROR: Model file is too small ($FILE_SIZE bytes). This is likely a Git LFS pointer file."; \
         echo "Please set GDRIVE_FILE_ID build argument or upload model to Google Drive."; \
         exit 1; \
     fi && \
-    MODEL_SIZE=$(du -h /app/backend/models/distilbert-seed42/final_model/model.safetensors | cut -f1) && \
+    MODEL_SIZE=$(du -h /app/backend/models/roberta-seed42/final_model/model.safetensors | cut -f1) && \
     echo "✓ Model verified: $MODEL_SIZE"
 
 # Install Python dependencies

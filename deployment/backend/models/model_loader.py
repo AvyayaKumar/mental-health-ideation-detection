@@ -57,7 +57,13 @@ class ModelLoader:
                 self._tokenizer = AutoTokenizer.from_pretrained(model_path)
             except:
                 logger.info("Tokenizer not found in model directory, loading from base model")
-                self._tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+                # Detect model type from path and use appropriate base tokenizer
+                if "roberta" in model_path.lower():
+                    self._tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+                elif "bert" in model_path.lower() and "distil" not in model_path.lower():
+                    self._tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+                else:
+                    self._tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
             self._model = AutoModelForSequenceClassification.from_pretrained(model_path)
             self._model.to(self._device)

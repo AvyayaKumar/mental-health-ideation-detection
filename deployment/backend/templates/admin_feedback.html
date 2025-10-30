@@ -159,6 +159,17 @@
         <h1 style="margin: 0 0 0.5rem 0;">Feedback Dashboard</h1>
         <p style="color: #666; margin: 0;">Monitor model performance and review teacher feedback</p>
         <a href="/" class="btn btn-primary" style="margin-top: 1rem;">← Back to Analyzer</a>
+
+        <!-- Retraining Status -->
+        <div id="retrainingStatus" style="margin-top: 1.5rem; padding: 1rem; border-radius: 8px; display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <strong id="statusTitle"></strong>
+              <p id="statusMessage" style="margin: 0.5rem 0 0 0; color: #666;"></p>
+            </div>
+            <div id="statusActions"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Statistics Cards -->
@@ -274,8 +285,52 @@
           `).join('');
 
           document.getElementById('classStats').innerHTML = classStatsHtml;
+
+          // Check retraining readiness
+          checkRetrainingStatus(data);
         } catch (e) {
           console.error('Error loading stats:', e);
+        }
+      }
+
+      function checkRetrainingStatus(stats) {
+        const incorrectCount = stats.incorrect_predictions;
+        const totalCount = stats.total_feedback;
+        const statusDiv = document.getElementById('retrainingStatus');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusActions = document.getElementById('statusActions');
+
+        // Show status if we have any feedback
+        if (totalCount > 0) {
+          statusDiv.style.display = 'block';
+
+          if (incorrectCount >= 50) {
+            // Ready to retrain!
+            statusDiv.style.background = '#e8f5e9';
+            statusDiv.style.border = '2px solid #4caf50';
+            statusTitle.textContent = '✅ Ready to Retrain!';
+            statusTitle.style.color = '#2e7d32';
+            statusMessage.textContent = `You have ${incorrectCount} incorrect predictions. This is enough to retrain your model and improve accuracy.`;
+            statusActions.innerHTML = `
+              <a href="/api/v1/feedback/export?format=csv&is_correct=false" class="btn btn-success" download>
+                📥 Download Corrections
+              </a>
+            `;
+          } else {
+            // Not ready yet
+            const needed = 50 - incorrectCount;
+            statusDiv.style.background = '#fff3e0';
+            statusDiv.style.border = '2px solid #ff9800';
+            statusTitle.textContent = '📊 Collecting Feedback';
+            statusTitle.style.color = '#e65100';
+            statusMessage.textContent = `You have ${incorrectCount} corrections so far. Need ${needed} more before retraining is recommended.`;
+            statusActions.innerHTML = `
+              <button class="btn" style="background: #ff9800; color: white;" onclick="alert('Keep collecting feedback!\\n\\nRetraining works best with at least 50 incorrect predictions to learn from.')">
+                ℹ️ Why 50?
+              </button>
+            `;
+          }
         }
       }
 

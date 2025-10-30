@@ -170,6 +170,13 @@
             <div id="statusActions"></div>
           </div>
         </div>
+
+        <!-- Auto-Exported Files -->
+        <div id="autoExports" style="margin-top: 1.5rem; padding: 1rem; border-radius: 8px; background: #e3f2fd; border: 2px solid #2196f3; display: none;">
+          <strong style="color: #1565c0;">📦 Auto-Exported Files</strong>
+          <p style="margin: 0.5rem 0; color: #666;">Files automatically exported when threshold was reached:</p>
+          <div id="exportsList"></div>
+        </div>
       </div>
 
       <!-- Statistics Cards -->
@@ -258,6 +265,7 @@
       // Load stats on page load
       loadStats();
       loadFeedback();
+      loadAutoExports();
 
       async function loadStats() {
         try {
@@ -424,10 +432,44 @@
         }
       }
 
+      async function loadAutoExports() {
+        try {
+          const response = await fetch('/api/v1/feedback/auto-exports');
+          const data = await response.json();
+
+          if (data.exports && data.exports.length > 0) {
+            const exportsDiv = document.getElementById('autoExports');
+            const exportsList = document.getElementById('exportsList');
+
+            exportsDiv.style.display = 'block';
+
+            const exportsHtml = data.exports.map(exp => {
+              const date = new Date(exp.created_at).toLocaleString();
+              const sizeMB = (exp.size_bytes / 1024 / 1024).toFixed(2);
+
+              return `
+                <div style="margin-top: 0.5rem; padding: 0.75rem; background: white; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <strong>${exp.filename}</strong><br/>
+                    <small style="color: #666;">Created: ${date} | Size: ${sizeMB} MB</small>
+                  </div>
+                  <a href="${exp.download_url}" class="btn btn-primary" download>Download</a>
+                </div>
+              `;
+            }).join('');
+
+            exportsList.innerHTML = exportsHtml;
+          }
+        } catch (e) {
+          console.error('Error loading auto-exports:', e);
+        }
+      }
+
       // Refresh stats every 30 seconds
       setInterval(() => {
         loadStats();
         loadFeedback();
+        loadAutoExports();
       }, 30000);
     </script>
   </body>

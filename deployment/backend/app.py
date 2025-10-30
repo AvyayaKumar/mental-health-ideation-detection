@@ -94,6 +94,25 @@ async def startup_event():
     except Exception as e:
         print(f"Cleanup error: {e}")
 
+    # Start automatic feedback monitoring
+    try:
+        from scheduler import init_monitor
+        init_monitor(SessionLocal, min_corrections=50)
+        logger.info("✅ Automatic feedback monitoring started")
+    except Exception as e:
+        logger.error(f"Failed to start feedback monitor: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on application shutdown."""
+    try:
+        from scheduler import shutdown_monitor
+        shutdown_monitor()
+        logger.info("✅ Feedback monitor stopped")
+    except Exception as e:
+        logger.error(f"Error stopping feedback monitor: {e}")
+
 
 class EssayRequest(BaseModel):
     text: str
@@ -418,6 +437,72 @@ def export_feedback(
 def admin_feedback_page(request: Request):
     """Admin dashboard for reviewing feedback."""
     return templates.TemplateResponse("admin_feedback.html", {"request": request})
+
+
+@app.get("/api/v1/feedback/auto-exports")
+def list_auto_exports():
+    """
+    List automatically exported correction files.
+
+    Returns list of CSV files that were auto-generated when
+    feedback threshold was reached.
+    """
+    export_dir = os.getenv("EXPORT_DIR", "/tmp/feedback_exports")
+
+    if not os.path.exists(export_dir):
+        return {"exports": []}
+
+    try:
+        files = []
+        for filename in os.listdir(export_dir):
+            if filename.endswith('.csv'):
+                filepath = os.path.join(export_dir, filename)
+                stat = os.stat(filepath)
+
+                files.append({
+                    "filename": filename,
+                    "size_bytes": stat.st_size,
+                    "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    "download_url": f"/api/v1/feedback/auto-exports/{filename}"
+                })
+
+        # Sort by creation time, newest first
+        files.sort(key=lambda x: x['created_at'], reverse=True)
+
+        return {"exports": files, "export_dir": export_dir}
+
+    except Exception as e:
+        logger.error(f"Error listing exports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/feedback/auto-exports/{filename}")
+def download_auto_export(filename: str):
+    """Download an auto-exported corrections file."""
+    import re
+
+    # Sanitize filename (prevent directory traversal)
+    if not re.match(r'^corrections_\d+samples_\d+_\d+\.csv$', filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    export_dir = os.getenv("EXPORT_DIR", "/tmp/feedback_exports")
+    filepath = os.path.join(export_dir, filename)
+
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        with open(filepath, 'r') as f:
+            content = f.read()
+
+        return StreamingResponse(
+            iter([content]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"Error downloading export: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================

@@ -6,6 +6,9 @@ uvicorn[standard]==0.30.0
 celery==5.3.6
 redis==5.0.1
 
+# Background Scheduler (for automatic feedback monitoring)
+apscheduler==3.10.4
+
 # Data Validation
 pydantic==2.9.2
 

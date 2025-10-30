@@ -13,6 +13,10 @@ from sqlalchemy.orm import sessionmaker
 # Database URL from environment or default to SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./feedback.db")
 
+# Fix for Railway PostgreSQL (uses postgres:// but SQLAlchemy 1.4+ needs postgresql://)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Create engine
 engine = create_engine(
     DATABASE_URL,

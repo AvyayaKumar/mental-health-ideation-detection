@@ -59,43 +59,29 @@
         const text = essayEl.value.trim();
         if (!text) { alert('Please paste essay text.'); return; }
         statusEl.style.display = 'block';
-        statusEl.innerHTML = '<span class="muted">Submitting...</span>';
+        statusEl.innerHTML = '<span class="muted">Analyzing...</span>';
         try {
-          const resp = await fetch('/api/v1/analyze', {
+          const resp = await fetch('/api/v1/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text })
           });
           const data = await resp.json();
           if (!resp.ok) throw new Error(data.detail || 'Request failed');
-          pollResult(data.task_id);
+          displayResult(data);
         } catch (e) {
           statusEl.innerHTML = `<span style="color:#f44336">Error: ${e.message}</span>`;
         }
       }
 
-      async function pollResult(taskId) {
-        statusEl.innerHTML = `<span class="muted">Analyzing... (task: ${taskId})</span>`;
-        const start = Date.now();
-        const timeoutMs = 30000;
-        const interval = setInterval(async () => {
-          if (Date.now() - start > timeoutMs) {
-            clearInterval(interval);
-            statusEl.innerHTML = '<span style="color:#f44336">Timed out waiting for result.</span>';
-            return;
-          }
-          const r = await fetch(`/api/v1/result/${taskId}`);
-          const data = await r.json();
-          if (data.status === 'SUCCESS' || data.result) {
-            clearInterval(interval);
-            const res = data.result || {};
-            const risk = (res.risk && res.risk.risk_level) || 'UNKNOWN';
-            const score = (res.risk && res.risk.score) || 0;
-            const confidence = (res.risk && res.risk.confidence) || 0;
-            const triggers = (res.risk && res.risk.triggers) || [];
-            const guidance = (res.risk && res.risk.guidance) || '';
-            const method = res.method || 'unknown';
-            const problematicSentences = (res.risk && res.risk.problematic_sentences) || [];
+      function displayResult(res) {
+        const risk = (res.risk && res.risk.risk_level) || 'UNKNOWN';
+        const score = (res.risk && res.risk.score) || 0;
+        const confidence = (res.risk && res.risk.confidence) || 0;
+        const triggers = (res.risk && res.risk.triggers) || [];
+        const guidance = (res.risk && res.risk.guidance) || '';
+        const method = res.method || 'unknown';
+        const problematicSentences = (res.risk && res.risk.problematic_sentences) || [];
 
             // Generate problematic sentences visualization
             let analysisHTML = '';
@@ -134,7 +120,7 @@
                 ${analysisHTML}
                 <div style="margin-top:1rem"><strong>Key triggers:</strong> ${triggers.length ? triggers.join(', ') : 'None detected'}</div>
                 <div style="margin-top:0.5rem"><strong>Guidance:</strong> ${guidance}</div>
-                <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? 'ML Transformer Model (DistilBERT)' : 'Keyword-based Fallback'}</div>
+                <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? 'ML Transformer Model (RoBERTa - 99.43% accuracy)' : 'Keyword-based Fallback'}</div>
               </div>
 
               <!-- Feedback Section -->
@@ -159,11 +145,6 @@
                   <div id="feedbackMessage"></div>
                 </div>
               </div>`;
-          } else if (data.status === 'FAILURE') {
-            clearInterval(interval);
-            statusEl.innerHTML = '<span style="color:#f44336">Analysis failed. Please try again.</span>';
-          }
-        }, 1200);
       }
 
       submitBtn.addEventListener('click', analyze);

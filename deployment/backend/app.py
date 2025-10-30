@@ -1,5 +1,6 @@
 import os
 import csv
+import logging
 from io import StringIO
 from typing import Optional, List
 from datetime import datetime
@@ -11,6 +12,8 @@ from pydantic import BaseModel, Field
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+
+logger = logging.getLogger(__name__)
 
 from worker import analyze_text, celery_app
 from models.database import init_db, get_db, Feedback, FeedbackStats, Visitor, SessionLocal
@@ -123,6 +126,27 @@ def health():
 @app.get("/")
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.post("/api/v1/predict")
+def predict_sync(req: EssayRequest):
+    """Direct synchronous prediction endpoint (no Celery required)."""
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    # Import pipeline here to avoid circular imports
+    from models.pipeline import AnalysisPipeline
+    pipeline = AnalysisPipeline()
+
+    try:
+        result = pipeline.analyze(text, explain=False)
+        return result
+    except Exception as e:
+        import traceback
+        logger.error(f"Prediction failed: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
 @app.post("/api/v1/analyze")

@@ -1,95 +1,41 @@
-# EDA Summary - Suicide Ideation Detection
+# Exploratory Data Analysis
 
-**Date:** October 6, 2025
-**Analyst:** Automated EDA from Colab
+## Dataset
 
----
+The working dataset contains 232,074 labeled text samples.
 
-## 📊 Dataset Overview
+| Class | Count | Share |
+| --- | ---: | ---: |
+| Positive class | 116,037 | 50.0% |
+| Negative class | 116,037 | 50.0% |
+| Total | 232,074 | 100.0% |
 
-- **Total samples:** 232,074
-- **Clean samples:** 232,074 (no data loss!)
-- **Source:** Social media text (Reddit/Twitter)
-- **Task:** Binary classification (suicide vs non-suicide)
+No rows were dropped during the final cleaning pass used for this analysis.
 
----
+## Text length
 
-## ✅ Class Distribution - PERFECTLY BALANCED!
+- mean length: 131.9 words
+- median length: 60.0 words
+- 63.7% of samples fit within 128 tokens
+- 80.7% fit within 256 tokens
 
-| Class | Count | Percentage |
-|-------|-------|------------|
-| Suicide | 116,037 | 50.0% |
-| Non-suicide | 116,037 | 50.0% |
+The distribution is right-skewed, with many short samples and a smaller number of long texts.
 
-**Imbalance Ratio:** 1.0 (perfectly balanced)
+## Configuration decisions
 
-### 👉 **Decision: NO class weights needed!**
-- Standard cross-entropy loss will work fine
-- No need for focal loss or oversampling
-- This simplifies training significantly
+### Sequence length
 
----
+The training configuration uses a maximum sequence length of 256. This covers 80.7% of samples without the computational cost of using 512 tokens for every example.
 
-## 📏 Text Length Statistics
+### Class weighting
 
-### Word Count:
-- **Mean:** 131.9 words
-- **Median:** 60.0 words
-- Distribution is **right-skewed** (most posts are short, some are very long)
+The dataset is evenly split between the two classes, so the current configuration does not apply class weights.
 
-### Token Coverage:
-- **≤ 128 tokens:** 63.7% (147,876 samples)
-- **≤ 256 tokens:** 80.7% (187,371 samples) ← **Selected**
-- **≤ 512 tokens:** Higher, but 4x slower training
+### Data split
 
----
+The project stores fixed split indices so repeated experiments use the same train, validation, and test examples.
 
-## 🎯 Key Decisions for Training
-
-### 1. **max_seq_length = 256**
-**Rationale:**
-- 80.7% coverage is good (industry standard: 75-85%)
-- 2x faster than 512 tokens
-- Only 19.3% get truncated (acceptable trade-off)
-- Most important info in social media posts is at the beginning
-
-### 2. **NO class weights**
-**Rationale:**
-- Perfect 50/50 balance
-- Standard cross-entropy loss is sufficient
-- Simpler training, easier to debug
-
-### 3. **Data quality: Excellent**
-- No missing values after cleaning
-- All text fields valid
-- Class labels consistent
-
----
-
-## 📈 Token Distribution Insights
-
-Looking at the token count histogram:
-- **Peak at 0-50 tokens:** Most posts are very short
-- **Long tail to 1000+ tokens:** Some posts are essays
-- **Median at 60 words ≈ 78 tokens:** Half of data is very compact
-
-### What this means:
-- Models will see mostly short texts during training
-- Truncation at 256 tokens won't hurt much
-- The few very long posts (outliers) won't dominate training
-
----
-
-## 🔍 Text Length by Class
-
-Both classes have similar token distributions:
-- No significant difference in post length between suicide/non-suicide
-- Models can't just rely on "length" as a feature
-- Must learn semantic/linguistic patterns
-
----
-
-## ✅ Final Configuration
+## Current preprocessing configuration
 
 ```yaml
 preprocessing:
@@ -98,36 +44,9 @@ preprocessing:
   truncation: true
 
 class_weights:
-  enabled: false  # Perfectly balanced dataset
-
-training:
-  per_device_train_batch_size: 16  # Can increase to 32 on good GPU
-  num_train_epochs: 3
-  learning_rate: 2e-5
+  enabled: false
 ```
 
----
+## Notes
 
-## 🚀 Next Steps
-
-1. ✅ **EDA Complete** - This file
-2. ⏭️ **Create data splits** - Run `02_create_data_splits.ipynb` in Colab
-3. ⏭️ **Build training infrastructure** - dataset.py, model.py, etc.
-4. ⏭️ **Train baseline** - TF-IDF + LogReg
-5. ⏭️ **Train transformers** - DistilBERT, BERT, RoBERTa, ELECTRA
-
----
-
-## 📁 Files Generated
-
-From Colab:
-- ✅ `eda_results.json` - Machine-readable results
-- ✅ `class_distribution.png` - Class balance visualization
-- ✅ `text_length_analysis.png` - Length distribution plots
-
-These files are now in: `/Users/avyayakumar/Desktop/Ideation-Detection/notebooks/`
-
----
-
-**Status:** ✅ EDA Phase Complete
-**Confidence:** High - clean, balanced dataset, clear decisions made
+The training dataset is not committed to this repository. Only the saved split indices and experiment outputs are versioned.

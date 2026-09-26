@@ -60,8 +60,8 @@ Run a configured transformer experiment:
 
 ```bash
 python src/train.py \
-  --base-config config/base_config.yaml \
-  --model-config config/model_configs/distilbert.yaml \
+  --base_config config/base_config.yaml \
+  --model_config config/model_configs/distilbert.yaml \
   --seed 42
 ```
 

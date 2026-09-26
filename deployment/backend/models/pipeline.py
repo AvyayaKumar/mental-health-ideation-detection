@@ -54,7 +54,8 @@ class AnalysisPipeline:
             "pii_redacted": pii_counts,
             "risk": risk_result,
             "sanitized_excerpt": snippet,
-            "method": "ml_model" if self.use_ml_model else "keyword_fallback"
+            "method": "ml_model" if self.use_ml_model else "keyword_fallback",
+            "model": model_loader.info if self.use_ml_model else None,
         }
 
     def _ml_risk_assessment(self, text: str, explain: bool) -> Dict:

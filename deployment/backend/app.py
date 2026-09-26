@@ -142,6 +142,13 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/api/v1/model-info")
+def model_info():
+    """Name and held-out test metrics of the model serving predictions (null if none is loaded)."""
+    from models.model_loader import model_loader
+    return {"model": model_loader.info}
+
+
 @app.get("/")
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})

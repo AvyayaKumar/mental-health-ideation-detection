@@ -1,0 +1,45 @@
+{
+  "model_type": "bert",
+  "model_name": "bert-base-uncased",
+  "seed": 123,
+  "val_results": {
+    "eval_loss": 0.09876170754432678,
+    "eval_accuracy": 0.9812556556211488,
+    "eval_precision": 0.9812133746983799,
+    "eval_recall": 0.9812979401878824,
+    "eval_f1": 0.9812556556211488,
+    "eval_fnr": 0.018702059812117557,
+    "eval_fpr": 0.01878662530162013,
+    "eval_true_positives": 11386,
+    "eval_true_negatives": 11386,
+    "eval_false_positives": 218,
+    "eval_false_negatives": 217,
+    "eval_runtime": 12.3561,
+    "eval_samples_per_second": 1878.177,
+    "eval_steps_per_second": 58.756,
+    "epoch": 3.0
+  },
+  "test_results": {
+    "eval_loss": 0.10003998875617981,
+    "eval_accuracy": 0.9800499827645639,
+    "eval_precision": 0.9809203142536476,
+    "eval_recall": 0.979145122371596,
+    "eval_f1": 0.9800319144348126,
+    "eval_fnr": 0.020854877628404,
+    "eval_fpr": 0.019045156842468113,
+    "eval_true_positives": 11362,
+    "eval_true_negatives": 11383,
+    "eval_false_positives": 221,
+    "eval_false_negatives": 242,
+    "eval_runtime": 13.1982,
+    "eval_samples_per_second": 1758.427,
+    "eval_steps_per_second": 55.008,
+    "epoch": 3.0
+  },
+  "training_config": {
+    "learning_rate": 2e-05,
+    "batch_size": 16,
+    "epochs": 3,
+    "max_seq_length": 256
+  }
+}

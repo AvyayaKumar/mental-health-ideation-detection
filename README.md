@@ -72,8 +72,8 @@ The deployed model is RoBERTa (seed 42). Configs for DistilBERT, BERT, RoBERTa, 
 cd research
 pip install -r requirements-research.txt
 python src/train.py \
-  --base-config config/base_config.yaml \
-  --model-config config/model_configs/distilbert.yaml
+  --base_config config/base_config.yaml \
+  --model_config config/model_configs/distilbert.yaml
 ```
 
 See `research/README.md` for the research workflow.

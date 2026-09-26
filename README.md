@@ -9,7 +9,7 @@ Live application: https://mentalhealthideation.com
 
 ## Deployment
 
-Since September 2025 the application has been running at James Logan High School (enrollment about 4,000 students). It has surfaced nearly 100 potentially concerning submissions for educator review, and 5 teachers rated its usefulness 3.7/5. Every flag is reviewed by a person; the model is decision support, not a diagnosis.
+Since September 2025 the application has been running at James Logan High School (enrollment about 4,000 students). It has flagged nearly 100 submissions for educator review and averaged 3.7/5 across a multi-question usefulness survey of 5 teachers. Every flag is reviewed by a person; the model is decision support, not a diagnosis.
 
 ## Results
 

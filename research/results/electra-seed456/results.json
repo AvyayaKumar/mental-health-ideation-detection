@@ -1,0 +1,45 @@
+{
+  "model_type": "electra",
+  "model_name": "google/electra-base-discriminator",
+  "seed": 456,
+  "val_results": {
+    "eval_loss": 0.08787781000137329,
+    "eval_accuracy": 0.9825052785797389,
+    "eval_precision": 0.9802693660461526,
+    "eval_recall": 0.9848315090924761,
+    "eval_f1": 0.9825451418744626,
+    "eval_fnr": 0.015168490907523917,
+    "eval_fpr": 0.019820751465012065,
+    "eval_true_positives": 11427,
+    "eval_true_negatives": 11374,
+    "eval_false_positives": 230,
+    "eval_false_negatives": 176,
+    "eval_runtime": 17.8324,
+    "eval_samples_per_second": 1301.394,
+    "eval_steps_per_second": 40.712,
+    "epoch": 3.0
+  },
+  "test_results": {
+    "eval_loss": 0.0896097719669342,
+    "eval_accuracy": 0.9815149948293692,
+    "eval_precision": 0.9792435028733167,
+    "eval_recall": 0.9838848672871424,
+    "eval_f1": 0.9815586983622061,
+    "eval_fnr": 0.016115132712857635,
+    "eval_fpr": 0.020854877628404,
+    "eval_true_positives": 11417,
+    "eval_true_negatives": 11362,
+    "eval_false_positives": 242,
+    "eval_false_negatives": 187,
+    "eval_runtime": 18.475,
+    "eval_samples_per_second": 1256.185,
+    "eval_steps_per_second": 39.296,
+    "epoch": 3.0
+  },
+  "training_config": {
+    "learning_rate": 2e-05,
+    "batch_size": 16,
+    "epochs": 3,
+    "max_seq_length": 256
+  }
+}

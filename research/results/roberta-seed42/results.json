@@ -1,0 +1,45 @@
+{
+  "model_type": "roberta",
+  "model_name": "roberta-base",
+  "seed": 42,
+  "val_results": {
+    "eval_loss": 0.028993627056479454,
+    "eval_accuracy": 0.9951307795061834,
+    "eval_precision": 0.9964569650881437,
+    "eval_recall": 0.9937947082651039,
+    "eval_f1": 0.9951240560949299,
+    "eval_fnr": 0.006205291734896147,
+    "eval_fpr": 0.003533264391589107,
+    "eval_true_positives": 11531,
+    "eval_true_negatives": 11563,
+    "eval_false_positives": 41,
+    "eval_false_negatives": 72,
+    "eval_runtime": 12.3874,
+    "eval_samples_per_second": 1873.439,
+    "eval_steps_per_second": 58.608,
+    "epoch": 3.0
+  },
+  "test_results": {
+    "eval_loss": 0.03127268701791763,
+    "eval_accuracy": 0.994527749052051,
+    "eval_precision": 0.9965388941766895,
+    "eval_recall": 0.9925025853154085,
+    "eval_f1": 0.9945166443590518,
+    "eval_fnr": 0.00749741468459152,
+    "eval_fpr": 0.003447087211306446,
+    "eval_true_positives": 11517,
+    "eval_true_negatives": 11564,
+    "eval_false_positives": 40,
+    "eval_false_negatives": 87,
+    "eval_runtime": 13.136,
+    "eval_samples_per_second": 1766.75,
+    "eval_steps_per_second": 55.268,
+    "epoch": 3.0
+  },
+  "training_config": {
+    "learning_rate": 2e-05,
+    "batch_size": 16,
+    "epochs": 3,
+    "max_seq_length": 256
+  }
+}

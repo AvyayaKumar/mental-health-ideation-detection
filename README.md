@@ -7,6 +7,10 @@ A machine-learning project for classifying mental-health risk signals in text. T
 
 Live application: https://mentalhealthideation.com
 
+## Deployment
+
+Since September 2025 the application has been running at James Logan High School (enrollment about 4,000 students). It has surfaced nearly 100 potentially concerning submissions for educator review, and 5 teachers rated its usefulness 3.7/5. Every flag is reviewed by a person; the model is decision support, not a diagnosis.
+
 ## Results
 
 The current DistilBERT run uses a 232,074-sample balanced text dataset with an 80/10/10 train/validation/test split.
@@ -79,7 +83,12 @@ See `research/README.md` for the research workflow.
 
 ## Application
 
-The application exposes synchronous and queued inference endpoints, stores reviewer feedback in PostgreSQL, and includes an administrative interface for reviewing predictions and feedback. Celery and Redis are used for background work, while Docker Compose provides a local multi-service setup.
+The application stores reviewer feedback in PostgreSQL and includes an administrative interface for reviewing predictions and feedback.
+
+- **Live demo:** the web UI calls the synchronous `POST /api/v1/predict` endpoint with `explain=False`, so predictions come back in a single request.
+- **In the code but off in the demo:** a Celery/Redis queue (`POST /api/v1/analyze` plus `GET /api/v1/result/{task_id}`) and Integrated Gradients word highlighting. IG is CPU-heavy, so it's disabled on the Railway deployment.
+
+Docker Compose provides a local multi-service setup, including Celery and Redis.
 
 ### Run locally
 
@@ -98,7 +107,7 @@ See `deployment/README.md` for deployment details.
 
 The training dataset itself is not committed to this repository. The repository also does not include student essays or other production user text.
 
-The application includes PII-redaction utilities before model analysis. This project is intended as a research and decision-support system, not a diagnostic tool, and model output should always be reviewed by a person in context.
+Before analysis, the application redacts email addresses and phone numbers (`deployment/backend/services/pii.py`). It doesn't detect other personal information such as names or addresses. This project is intended as a research and decision-support system, not a diagnostic tool, and model output should always be reviewed by a person in context.
 
 ## License
 

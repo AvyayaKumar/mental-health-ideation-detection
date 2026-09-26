@@ -69,7 +69,9 @@ See `backend/app.py` for the current route definitions.
 
 ## Model loading
 
-The deployed application uses the trained transformer model when it is available and falls back to the project's rule-based scorer if the model cannot be loaded.
+The deployed application serves the RoBERTa seed-42 run and falls back to the project's rule-based scorer if the model can't be loaded.
+
+On Railway, `deployment/.railway/Dockerfile` downloads the model zip from Google Drive at build time (`GDRIVE_FILE_ID`). The zip must contain `backend/models/<run>/final_model/`, where `<run>` is the `MODEL_RUN` build arg (default `roberta-seed42`). The build also copies `research/results/<run>/results.json` next to the model and saves the base tokenizer into the model folder. `GET /api/v1/model-info` and every prediction response report the model name and its held-out test metrics from that file; the web UI shows them.
 
 ## Feedback and retraining
 
@@ -79,6 +81,6 @@ The retraining utilities are intentionally separated from the request path so mo
 
 ## Privacy
 
-The application includes PII-redaction logic before model analysis. Raw user text should not be treated as durable analytics data unless explicitly required and appropriately protected.
+Before model analysis the application redacts email addresses and phone numbers (`backend/services/pii.py`); it doesn't detect names or other personal information. Raw user text should not be treated as durable analytics data unless explicitly required and appropriately protected.
 
 This project is a research and decision-support tool, not a diagnostic system. Predictions require human review.

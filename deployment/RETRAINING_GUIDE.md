@@ -100,9 +100,15 @@ python scripts/retrain_model.py \
 After training completes:
 
 ```bash
-# Zip the model
-cd retrained_roberta_v2
-zip -r ../retrained_model.zip final_model/
+# Zip the model in the layout the Railway Dockerfile expects:
+# backend/models/<run>/final_model/
+mkdir -p package/backend/models/roberta-retrained-v2
+cp -r retrained_roberta_v2/final_model package/backend/models/roberta-retrained-v2/
+(cd package && zip -r ../retrained_model.zip backend/)
+
+# Commit the new run's held-out test results; the app reads them to label predictions
+mkdir -p research/results/roberta-retrained-v2
+cp <path to the new run's results.json> research/results/roberta-retrained-v2/results.json
 
 # Upload to Google Drive
 # (Upload retrained_model.zip to Google Drive)
@@ -114,6 +120,8 @@ zip -r ../retrained_model.zip final_model/
 # Update Railway environment variables
 # Railway Dashboard → Web service → Variables
 # Update: GDRIVE_FILE_ID=new_file_id
+#         MODEL_PATH=/app/backend/models/roberta-retrained-v2/final_model
+# and set the MODEL_RUN build arg to roberta-retrained-v2
 
 # Redeploy
 # Railway Dashboard → Web service → Deployments → Redeploy

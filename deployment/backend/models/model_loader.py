@@ -5,12 +5,28 @@ Loads the trained transformer model and provides prediction interface.
 """
 
 import os
+import json
 import logging
 from typing import Optional, Dict
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 logger = logging.getLogger(__name__)
+
+
+BASE_TOKENIZERS = {
+    "roberta": "roberta-base",
+    "bert": "bert-base-uncased",
+    "distilbert": "distilbert-base-uncased",
+    "electra": "google/electra-base-discriminator",
+}
+
+MODEL_DISPLAY_NAMES = {
+    "roberta": "RoBERTa",
+    "bert": "BERT",
+    "distilbert": "DistilBERT",
+    "electra": "ELECTRA",
+}
 
 
 class ModelLoader:
@@ -20,6 +36,7 @@ class ModelLoader:
     _model = None
     _tokenizer = None
     _device = None
+    _info = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -52,29 +69,64 @@ class ModelLoader:
             logger.info(f"Loading model from: {model_path}")
             self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-            # Load tokenizer from base model (fallback if not in model_path)
-            try:
-                self._tokenizer = AutoTokenizer.from_pretrained(model_path)
-            except:
-                logger.info("Tokenizer not found in model directory, loading from base model")
-                # Detect model type from path and use appropriate base tokenizer
-                if "roberta" in model_path.lower():
-                    self._tokenizer = AutoTokenizer.from_pretrained("roberta-base")
-                elif "bert" in model_path.lower() and "distil" not in model_path.lower():
-                    self._tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-                else:
-                    self._tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+            self._tokenizer = self._load_tokenizer(model_path)
 
             self._model = AutoModelForSequenceClassification.from_pretrained(model_path)
             self._model.to(self._device)
             self._model.eval()
 
-            logger.info(f"✓ Model loaded successfully on {self._device}")
+            self._info = self._load_info(model_path)
+            logger.info(f"✓ Model loaded successfully on {self._device}: {self._info}")
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             self._model = None
             self._tokenizer = None
+
+    @staticmethod
+    def _load_tokenizer(model_path: str):
+        """
+        Use the tokenizer saved next to the model if there is one; otherwise use
+        the base model's tokenizer. Only look in model_path when tokenizer files
+        exist: with no vocab there, newer transformers releases build an empty
+        tokenizer instead of raising, and every input collapses to the same two
+        special tokens.
+        """
+        tokenizer_files = ("tokenizer.json", "vocab.json", "vocab.txt")
+        if any(os.path.exists(os.path.join(model_path, f)) for f in tokenizer_files):
+            tokenizer = AutoTokenizer.from_pretrained(model_path)
+        else:
+            with open(os.path.join(model_path, "config.json")) as f:
+                model_type = json.load(f)["model_type"]
+            base = BASE_TOKENIZERS[model_type]
+            logger.info(f"No tokenizer files in {model_path}; using {base}")
+            tokenizer = AutoTokenizer.from_pretrained(base)
+        if len(tokenizer) < 1000:
+            raise RuntimeError(f"Tokenizer has only {len(tokenizer)} tokens; refusing to serve predictions")
+        return tokenizer
+
+    @staticmethod
+    def _load_info(model_path: str) -> Dict:
+        """Model name from the loaded config, and test metrics from that run's results.json."""
+        with open(os.path.join(model_path, "config.json")) as f:
+            model_type = json.load(f)["model_type"]
+        info = {"name": MODEL_DISPLAY_NAMES.get(model_type, model_type), "model_type": model_type}
+
+        results_path = os.getenv("MODEL_RESULTS_PATH") or os.path.join(os.path.dirname(model_path), "results.json")
+        try:
+            with open(results_path) as f:
+                test = json.load(f)["test_results"]
+            info["test_accuracy"] = test["eval_accuracy"]
+            info["test_f1"] = test["eval_f1"]
+            info["test_fnr"] = test["eval_fnr"]
+        except (OSError, KeyError, ValueError) as e:
+            logger.warning(f"No test metrics for {model_path} ({results_path}): {e}")
+        return info
+
+    @property
+    def info(self) -> Optional[Dict]:
+        """Name and held-out test metrics of the loaded model, or None if no model is loaded."""
+        return self._info if self.is_available else None
 
     @property
     def is_available(self) -> bool:

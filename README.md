@@ -13,19 +13,16 @@ Since September 2025 the application has been running at James Logan High School
 
 ## Results
 
-The current DistilBERT run uses a 232,074-sample balanced text dataset with an 80/10/10 train/validation/test split.
+All models were fine-tuned on the same 232,074-sample balanced text dataset with the same fixed 80/10/10 train/validation/test split (`research/data/splits/split_indices.json`), using learning rate `2e-5`, batch size 16, 3 epochs, and a maximum sequence length of 256. Each model was trained with seeds 42, 123, and 456. All numbers are on the held-out test set (23,208 samples).
 
-| Metric | Test result |
-| --- | ---: |
-| Accuracy | 97.96% |
-| Precision | 98.24% |
-| Recall | 97.66% |
-| F1 | 97.95% |
-| False-negative rate | 2.34% |
+| Model | Seed 42 test accuracy | Seed 42 test F1 | Seed 42 FNR | Mean test accuracy (3 seeds) |
+| --- | ---: | ---: | ---: | ---: |
+| DistilBERT | 97.96% | 97.95% | 2.34% | 97.94% |
+| BERT | 97.94% | 97.94% | 1.76% | 97.98% |
+| ELECTRA | 98.26% | 98.26% | 1.71% | 98.23% |
+| **RoBERTa (deployed)** | **99.45%** | **99.45%** | **0.75%** | 99.43% |
 
-The saved run configuration uses a learning rate of `2e-5`, batch size 16, 3 epochs, and a maximum sequence length of 256.
-
-See `research/results/distilbert-seed42/results.json` for the complete output.
+The live application serves the RoBERTa seed-42 run (test precision 99.65%, recall 99.25%). Each run's full output is in `research/results/<model>-seed<seed>/results.json`, with summaries in `research/results/results_summary.csv` and `aggregated_results.csv`. The app reads the deployed run's `results.json` and shows that model name and test accuracy in the UI, so the label can't drift from the file.
 
 ## Stack
 
@@ -67,7 +64,7 @@ The research code supports:
 - model interpretability experiments
 - experiment logging with Weights & Biases
 
-The current production model is DistilBERT. Additional model configs are included for BERT, RoBERTa, and ELECTRA.
+The deployed model is RoBERTa (seed 42). Configs for DistilBERT, BERT, RoBERTa, and ELECTRA are in `research/config/model_configs/`.
 
 ### Run training
 

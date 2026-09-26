@@ -29,7 +29,7 @@ user-agents==2.2.0
 # ML/AI Dependencies (CPU-only for smaller image size)
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.0.0
-transformers>=4.30.0
+transformers==5.17.0  # pinned: unpinned installs picked up a new major release that silently broke tokenizer loading
 captum>=0.6.0  # For Integrated Gradients (text highlighting)
 numpy>=1.24.0
 

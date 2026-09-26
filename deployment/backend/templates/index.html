@@ -55,6 +55,25 @@
       // Store current analysis result for feedback
       let currentAnalysis = null;
 
+      // "RoBERTa (99.45% test accuracy)", built from what the API reports about the loaded model
+      function modelLabel(model) {
+        if (!model) return 'ML Transformer Model';
+        if (typeof model.test_accuracy !== 'number') return model.name;
+        return `${model.name} (${(model.test_accuracy * 100).toFixed(2)}% test accuracy)`;
+      }
+
+      async function loadModelFooter() {
+        try {
+          const resp = await fetch('/api/v1/model-info');
+          const data = await resp.json();
+          document.getElementById('model-footer').textContent =
+            data.model ? `${modelLabel(data.model)} on a held-out test set` : 'Keyword-based fallback (no model loaded)';
+        } catch (e) {
+          document.getElementById('model-footer').textContent = '';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', loadModelFooter);
+
       async function analyze() {
         const text = essayEl.value.trim();
         if (!text) { alert('Please paste essay text.'); return; }
@@ -120,7 +139,7 @@
                 ${analysisHTML}
                 <div style="margin-top:1rem"><strong>Key triggers:</strong> ${triggers.length ? triggers.join(', ') : 'None detected'}</div>
                 <div style="margin-top:0.5rem"><strong>Guidance:</strong> ${guidance}</div>
-                <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? 'ML Transformer Model (RoBERTa - 99.43% accuracy)' : 'Keyword-based Fallback'}</div>
+                <div style="margin-top:0.5rem" class="analysis-method">Method: ${method === 'ml_model' ? modelLabel(res.model) : 'Keyword-based Fallback'}</div>
               </div>
 
               <!-- Feedback Section -->
@@ -253,7 +272,7 @@
         <li><strong>International:</strong> <a href="https://www.iasp.info/resources/Crisis_Centres/" target="_blank">Find your local helpline</a></li>
       </ul>
       <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
-        mentalhealthideation.com • Research Project • DistilBERT Model (97.96% Accuracy)
+        mentalhealthideation.com • Research Project • <span id="model-footer"></span>
       </p>
     </div>
   </body>

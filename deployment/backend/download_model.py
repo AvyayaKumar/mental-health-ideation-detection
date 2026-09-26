@@ -7,8 +7,8 @@ import urllib.request
 import zipfile
 import sys
 
-MODEL_DIR = "/app/models/distilbert-seed42/final_model"
-GDRIVE_FILE_ID = "1rVmEb6WqLzNIdVbJOAcJnoN6xiM6NPlA"
+MODEL_DIR = "/app/backend/models/roberta-seed42/final_model"
+GDRIVE_FILE_ID = "1ialJXEYmk6Hhhq_nYQUqLTmIp-v5f5g9"  # roberta-model.zip, same file Railway builds from
 MODEL_ZIP_URL = f"https://drive.google.com/uc?export=download&id={GDRIVE_FILE_ID}"
 
 def download_model():
@@ -20,17 +20,18 @@ def download_model():
     print("⬇️  Downloading model from Google Drive...")
     try:
         # Create directories
-        os.makedirs("/app/models", exist_ok=True)
+        os.makedirs("/app", exist_ok=True)
 
         # Download zip
-        zip_path = "/tmp/distilbert-model.zip"
+        zip_path = "/tmp/roberta-model.zip"
         urllib.request.urlretrieve(MODEL_ZIP_URL, zip_path)
         print(f"✓ Downloaded model to {zip_path}")
 
         # Extract
         print("📦 Extracting model...")
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall("/app/models")
+            # The zip contains backend/models/roberta-seed42/final_model/
+            zip_ref.extractall("/app")
 
         # Cleanup
         os.remove(zip_path)

@@ -2,31 +2,9 @@
 
 This directory contains the model-training and evaluation code for the text-classification portion of the project.
 
-## Current experiment
+## Results
 
-The completed DistilBERT run is stored under `results/distilbert-seed42/`.
-
-Test-set results:
-
-| Metric | Value |
-| --- | ---: |
-| Accuracy | 0.9796 |
-| Precision | 0.9824 |
-| Recall | 0.9766 |
-| F1 | 0.9795 |
-| False-negative rate | 0.0234 |
-| False-positive rate | 0.0175 |
-
-Training configuration:
-
-- model: `distilbert-base-uncased`
-- seed: 42
-- learning rate: `2e-5`
-- batch size: 16
-- epochs: 3
-- max sequence length: 256
-
-The full run output is in `results/distilbert-seed42/results.json`.
+The benchmark (DistilBERT, BERT, ELECTRA, RoBERTa, three seeds each, plus a TF-IDF baseline) and an audit of what the test score means are in the root README under "What the 99.45% does and doesn't mean". Per-run output is in `results/<model>-seed<seed>/results.json`; the audit output is `results/audit/audit.json`, produced by `scripts/audit_evaluation.py`.
 
 ## Layout
 

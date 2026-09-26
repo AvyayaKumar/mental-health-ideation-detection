@@ -90,3 +90,6 @@ Thumbs.db
 
 # Internal documentation and notes
 .archive/
+
+# Audit error dump contains raw dataset text; keep it local
+research/results/audit/test_errors.csv

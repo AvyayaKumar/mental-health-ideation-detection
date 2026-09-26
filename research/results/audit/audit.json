@@ -1,0 +1,173 @@
+{
+  "rows": 232074,
+  "class_counts": [
+    116037,
+    116037
+  ],
+  "duplicates": {
+    "exact_duplicate_rows": 0,
+    "normalized_duplicate_rows": 93,
+    "normalized_texts_with_conflicting_labels": 0,
+    "val_rows_also_in_train": 15,
+    "test_rows_also_in_train": 11
+  },
+  "glued_line_share_by_class": {
+    "non_suicide": 0.0003016279290226393,
+    "suicide": 0.20403836707257167
+  },
+  "tfidf_logreg": {
+    "val": {
+      "accuracy": 0.9339854354289654,
+      "f1": 0.9334144645340752,
+      "fnr": 0.07454968542618289,
+      "fpr": 0.05748017924853499,
+      "tp": 10738,
+      "tn": 10937,
+      "fp": 667,
+      "fn": 865
+    },
+    "test": {
+      "accuracy": 0.9356687349189935,
+      "f1": 0.9351349002910893,
+      "fnr": 0.0725611857980007,
+      "fpr": 0.05610134436401241,
+      "tp": 10762,
+      "tn": 10953,
+      "fp": 651,
+      "fn": 842
+    },
+    "top_features": {
+      "non_suicide": [
+        "teenagers",
+        "crush",
+        "dm",
+        "rant",
+        "horny",
+        "minecraft",
+        "bruh",
+        "covid",
+        "cute",
+        "boys",
+        "bored",
+        "discord",
+        "teens",
+        "nnn",
+        "teenager",
+        "teacher",
+        "award",
+        "rn",
+        "filler",
+        "2020",
+        "karma",
+        "lmao",
+        "memes",
+        "cool",
+        "yall"
+      ],
+      "suicide": [
+        "suicide",
+        "suicidal",
+        "kill",
+        "killing",
+        "mei",
+        "pills",
+        "life",
+        "end",
+        "anymore",
+        "die",
+        "iti",
+        "helpi",
+        "ending",
+        "diei",
+        "alive",
+        "anymorei",
+        "living",
+        "myselfi",
+        "rope",
+        "overdose",
+        "lifei",
+        "job",
+        "tonight",
+        "painless",
+        "family"
+      ]
+    }
+  },
+  "roberta_test": {
+    "accuracy": 0.994527749052051,
+    "f1": 0.994516644359052,
+    "fnr": 0.00749741468459152,
+    "fpr": 0.003447087211306446,
+    "tp": 11517,
+    "tn": 11564,
+    "fp": 40,
+    "fn": 87,
+    "false_negatives_with_p_below_0.05": 79,
+    "false_positives_with_p_above_0.95": 30,
+    "share_of_test_with_p_between_0.1_and_0.9": 0.0010772147535332644,
+    "median_words_all": 60.0,
+    "median_words_errors": 70.0
+  },
+  "probes": [
+    {
+      "expected": 0,
+      "p_suicide": 0.0,
+      "text": "This chemistry test is going to kill me, I have not studied at all."
+    },
+    {
+      "expected": 0,
+      "p_suicide": 0.0,
+      "text": "In Romeo and Juliet, Juliet takes her own life after finding Romeo dead, which shows how the feud destroys both families."
+    },
+    {
+      "expected": 0,
+      "p_suicide": 0.0,
+      "text": "My essay argues that schools should expand access to counselors because teen suicide rates have risen over the past decade."
+    },
+    {
+      "expected": 0,
+      "p_suicide": 0.0,
+      "text": "I was so embarrassed when I tripped in front of the whole class that I wanted to disappear."
+    },
+    {
+      "expected": 0,
+      "p_suicide": 0.0,
+      "text": "Over the summer I volunteered at a food bank and learned how much planning goes into feeding a community."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.002,
+      "text": "Lately I don't really see the point of anything. I sleep all day and I think everyone would be better off without me."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.0,
+      "text": "Sometimes I wish I could just go to sleep and not wake up."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.0,
+      "text": "I have been giving my things away to friends because I will not need them soon."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.005,
+      "text": "In this personal narrative I want to write about the night last spring when I decided I was done and wrote a goodbye letter."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.0,
+      "text": "honestly lol i kinda want to die haha anyway whats the homework"
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.104,
+      "text": "I want to kill myself."
+    },
+    {
+      "expected": 1,
+      "p_suicide": 0.91,
+      "text": "I don't want to be alive anymore."
+    }
+  ]
+}
